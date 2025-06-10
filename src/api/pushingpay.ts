@@ -1,4 +1,3 @@
-
 /*
   API DA PUSHINPAY PARA PIX
   
@@ -81,6 +80,7 @@ export const checkPaymentStatus = async (paymentId: string): Promise<PushinPayPa
       status: Math.random() > 0.7 ? 'paid' : 'pending',
       qr_code: '',
       qr_code_base64: '',
+      pix_key: '', // Added missing pix_key property
       created_at: new Date().toISOString()
     };
   } catch (error) {
