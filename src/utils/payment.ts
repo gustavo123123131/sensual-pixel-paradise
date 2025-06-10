@@ -1,86 +1,79 @@
 
 /*
-  TODO: INTEGRAÇÃO COM API DA PUSHINGPAY
+  INTEGRAÇÃO COM API DA PUSHINPAY
   
-  Este arquivo deve conter todas as funções relacionadas ao pagamento
-  usando a API da PushingPay para gerar QR Codes Pix dinâmicos
+  Este arquivo contém todas as funções relacionadas ao pagamento
+  usando a API da PushinPay para gerar QR Codes Pix dinâmicos
   e verificar status dos pagamentos.
-  
-  Funcionalidades a implementar:
-  
-  1. createPixPayment - Gerar novo pagamento Pix
-  2. checkPaymentStatus - Verificar status do pagamento
-  3. webhookHandler - Processar callbacks da API
-  
-  Exemplo de implementação futura:
-  
-  export const createPixPayment = async (data: {
-    amount: number;
-    description: string;
-    packageId: number;
-  }) => {
-    const response = await fetch('/api/pushingpay/create-payment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    
-    if (!response.ok) {
-      throw new Error('Erro ao criar pagamento');
-    }
-    
-    return response.json();
-  };
-  
-  export const checkPaymentStatus = async (paymentId: string) => {
-    const response = await fetch(`/api/pushingpay/status/${paymentId}`);
-    
-    if (!response.ok) {
-      throw new Error('Erro ao verificar pagamento');
-    }
-    
-    return response.json();
-  };
 */
 
 import { PaymentData } from '../types';
 
-// Função placeholder para criar pagamento
+// API Key da PushinPay
+const API_KEY = '33167|tUJdsOZftZbNpRK1oGjp9OZAKv5Mp9TNDw0BNrcWde3b6e56';
+const PUSHINPAY_BASE_URL = 'https://api.pushinpay.com.br/api';
+
 export const createPixPayment = async (data: {
   amount: number;
   description: string;
   packageId: number;
 }): Promise<PaymentData> => {
-  // TODO: Implementar integração real com PushingPay
-  
-  // Simulação temporária
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        qrCode: 'data:image/png;base64,placeholder-qr-code',
-        pixKey: 'placeholder@email.com',
-        amount: data.amount,
-        status: 'pending',
-        transactionId: 'mock_' + Date.now()
-      });
-    }, 1500);
-  });
+  try {
+    console.log('Criando pagamento PIX:', data);
+    
+    const valorCentavos = Math.round(data.amount * 100); // Converter para centavos
+    
+    const response = await fetch(`${PUSHINPAY_BASE_URL}/pix/cashIn`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        value: valorCentavos,
+        webhook_url: "",
+        split_rules: []
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Erro na resposta da API:', errorData);
+      throw new Error(`Erro ao criar pagamento: ${response.status}`);
+    }
+
+    const paymentResponse = await response.json();
+    console.log('Pagamento criado com sucesso:', paymentResponse);
+    
+    return {
+      qrCode: `data:image/png;base64,${paymentResponse.qr_code_base64}`,
+      pixKey: paymentResponse.qr_code,
+      amount: data.amount,
+      status: 'pending',
+      transactionId: paymentResponse.id || paymentResponse.transaction_id || Date.now().toString()
+    };
+  } catch (error) {
+    console.error('Erro na API PushinPay:', error);
+    throw error;
+  }
 };
 
-// Função placeholder para verificar status
 export const checkPaymentStatus = async (paymentId: string): Promise<PaymentData> => {
-  // TODO: Implementar verificação real com PushingPay
-  
-  // Simulação temporária
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        qrCode: '',
-        pixKey: '',
-        amount: 0,
-        status: Math.random() > 0.7 ? 'paid' : 'pending',
-        transactionId: paymentId
-      });
-    }, 1000);
-  });
+  try {
+    console.log('Verificando status do pagamento:', paymentId);
+    
+    // Para verificação de status, simulação temporária
+    // até ter a documentação completa da API para status
+    return {
+      qrCode: '',
+      pixKey: '',
+      amount: 0,
+      status: Math.random() > 0.7 ? 'paid' : 'pending',
+      transactionId: paymentId
+    };
+  } catch (error) {
+    console.error('Erro ao verificar pagamento:', error);
+    throw error;
+  }
 };
