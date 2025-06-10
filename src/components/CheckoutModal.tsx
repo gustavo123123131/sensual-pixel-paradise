@@ -11,7 +11,7 @@ interface CheckoutModalProps {
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({ package: pkg, isOpen, onClose }) => {
   const [paymentStatus, setPaymentStatus] = useState<'waiting' | 'processing' | 'completed' | 'error'>('waiting');
-  const [qrCodeData, setQrCodeData] = useState<string>('');
+  const [qrCodeImage, setQrCodeImage] = useState<string>('');
   const [pixKey, setPixKey] = useState<string>('');
   const [paymentId, setPaymentId] = useState<string>('');
 
@@ -32,8 +32,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ package: pkg, isOpen, onC
         customer_email: 'cliente@exemplo.com'
       });
       
-      setQrCodeData(payment.qr_code);
-      setPixKey(payment.pix_key);
+      setQrCodeImage(payment.qr_code_base64);
+      setPixKey(payment.qr_code);
       setPaymentId(payment.id);
       setPaymentStatus('waiting');
       
@@ -112,10 +112,10 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ package: pkg, isOpen, onC
 
           {paymentStatus === 'waiting' && (
             <div className="py-4">
-              {qrCodeData && (
+              {qrCodeImage && (
                 <div className="mb-4">
                   <img 
-                    src={qrCodeData} 
+                    src={qrCodeImage} 
                     alt="QR Code PIX" 
                     className="w-48 h-48 mx-auto bg-white rounded-xl p-4"
                   />
