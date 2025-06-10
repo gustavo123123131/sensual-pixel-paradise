@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Package } from '../types';
 import { createPixPayment, checkPaymentStatus } from '../api/pushingpay';
 import { Button } from './ui/button';
-import { Copy } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface CheckoutModalProps {
@@ -16,6 +17,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ package: pkg, isOpen, onC
   const [qrCodeImage, setQrCodeImage] = useState<string>('');
   const [pixKey, setPixKey] = useState<string>('');
   const [paymentId, setPaymentId] = useState<string>('');
+  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -66,10 +68,14 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ package: pkg, isOpen, onC
   const copyPixKey = async () => {
     try {
       await navigator.clipboard.writeText(pixKey);
+      setCopied(true);
       toast({
         title: "PIX Copiado!",
         description: "A chave PIX foi copiada para a área de transferência.",
       });
+      
+      // Reset copied state after 2 seconds
+      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       // Fallback para browsers mais antigos
       const textArea = document.createElement('textarea');
@@ -79,10 +85,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ package: pkg, isOpen, onC
       document.execCommand('copy');
       document.body.removeChild(textArea);
       
+      setCopied(true);
       toast({
         title: "PIX Copiado!",
         description: "A chave PIX foi copiada para a área de transferência.",
       });
+      
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -141,7 +150,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ package: pkg, isOpen, onC
               {qrCodeImage && (
                 <div className="mb-4">
                   <img 
-                    src={qrCodeImage} 
+                    src={`data:image/png;base64,${qrCodeImage}`}
                     alt="QR Code PIX" 
                     className="w-48 h-48 mx-auto bg-white rounded-xl p-4"
                   />
@@ -158,24 +167,37 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ package: pkg, isOpen, onC
               {pixKey && (
                 <div className="bg-gray-800 rounded-lg p-3 mb-4">
                   <p className="text-xs text-gray-400 mb-2">Chave Pix:</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm text-white font-mono break-all flex-1">
+                  <div className="flex items-center gap-2 mb-3">
+                    <p className="text-sm text-white font-mono break-all flex-1 bg-gray-900 p-2 rounded">
                       {pixKey}
                     </p>
-                    <Button
-                      onClick={copyPixKey}
-                      size="sm"
-                      variant="outline"
-                      className="shrink-0"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
                   </div>
+                  
+                  <button
+                    onClick={copyPixKey}
+                    className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                      copied 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-gradient-to-r from-orange-400 to-orange-500 text-white hover:from-orange-500 hover:to-orange-600'
+                    }`}
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-5 w-5" />
+                        Copiado!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-5 w-5" />
+                        Copiar chave Pix
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
               
               <p className="text-xs text-gray-500 mb-4">
-                Após o pagamento, você receberá o acesso no WhatsApp em até 5 minutos
+                Após o pagamento, você será redirecionado para o WhatsApp da modelo em até 5 minutos
               </p>
             </div>
           )}
@@ -187,7 +209,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ package: pkg, isOpen, onC
                 Pagamento Confirmado!
               </h4>
               <p className="text-gray-300 mb-4">
-                Seu acesso foi liberado. Verifique seu WhatsApp!
+                Você será redirecionado para o WhatsApp da modelo!
               </p>
               <button
                 onClick={onClose}
