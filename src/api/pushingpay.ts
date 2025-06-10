@@ -1,3 +1,4 @@
+
 /*
   API DA PUSHINPAY PARA PIX
   
@@ -69,23 +70,69 @@ export const createPixPayment = async (data: {
 
 export const checkPaymentStatus = async (paymentId: string): Promise<PushinPayPayment> => {
   try {
-    // Para verificação de status, vamos usar um endpoint simulado por enquanto
-    // até ter a documentação completa da API
     console.log('Verificando status do pagamento:', paymentId);
     
-    // Simulação temporária - em produção seria uma chamada real à API
+    // Usar o endpoint correto para verificar transações
+    const response = await fetch(`${PUSHINPAY_BASE_URL}/transactions/${paymentId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.error('Erro ao verificar pagamento:', response.status);
+      // Se não conseguir verificar, manter como pending
+      return {
+        id: paymentId,
+        value: 0,
+        status: 'pending',
+        qr_code: '',
+        qr_code_base64: '',
+        pix_key: '',
+        created_at: new Date().toISOString()
+      };
+    }
+
+    const result = await response.json();
+    console.log('Status do pagamento:', result);
+    
+    // Mapear os status da API para nossos status
+    let mappedStatus: 'pending' | 'paid' | 'expired' | 'error' = 'pending';
+    
+    if (result.status) {
+      const apiStatus = result.status.toLowerCase();
+      if (['confirmed', 'completed', 'paid'].includes(apiStatus)) {
+        mappedStatus = 'paid';
+      } else if (['expired', 'cancelled'].includes(apiStatus)) {
+        mappedStatus = 'expired';
+      } else if (['error', 'failed'].includes(apiStatus)) {
+        mappedStatus = 'error';
+      }
+    }
+    
     return {
       id: paymentId,
-      value: 0,
-      status: Math.random() > 0.7 ? 'paid' : 'pending',
-      qr_code: '',
-      qr_code_base64: '',
-      pix_key: '', // Added missing pix_key property
-      created_at: new Date().toISOString()
+      value: result.value || 0,
+      status: mappedStatus,
+      qr_code: result.qr_code || '',
+      qr_code_base64: result.qr_code_base64 || '',
+      pix_key: result.qr_code || '',
+      created_at: result.created_at || new Date().toISOString()
     };
   } catch (error) {
     console.error('Erro ao verificar pagamento:', error);
-    throw error;
+    // Em caso de erro, retornar como pending para não quebrar o fluxo
+    return {
+      id: paymentId,
+      value: 0,
+      status: 'pending',
+      qr_code: '',
+      qr_code_base64: '',
+      pix_key: '',
+      created_at: new Date().toISOString()
+    };
   }
 };
 

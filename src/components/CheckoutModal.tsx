@@ -1,7 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Package } from '../types';
 import { createPixPayment, checkPaymentStatus } from '../api/pushingpay';
+import { Button } from './ui/button';
+import { Copy } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface CheckoutModalProps {
   package: Package;
@@ -14,6 +16,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ package: pkg, isOpen, onC
   const [qrCodeImage, setQrCodeImage] = useState<string>('');
   const [pixKey, setPixKey] = useState<string>('');
   const [paymentId, setPaymentId] = useState<string>('');
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
@@ -57,6 +60,29 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ package: pkg, isOpen, onC
     } catch (error) {
       console.error('Erro ao inicializar pagamento:', error);
       setPaymentStatus('error');
+    }
+  };
+
+  const copyPixKey = async () => {
+    try {
+      await navigator.clipboard.writeText(pixKey);
+      toast({
+        title: "PIX Copiado!",
+        description: "A chave PIX foi copiada para a área de transferência.",
+      });
+    } catch (error) {
+      // Fallback para browsers mais antigos
+      const textArea = document.createElement('textarea');
+      textArea.value = pixKey;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      toast({
+        title: "PIX Copiado!",
+        description: "A chave PIX foi copiada para a área de transferência.",
+      });
     }
   };
 
@@ -131,10 +157,20 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ package: pkg, isOpen, onC
               
               {pixKey && (
                 <div className="bg-gray-800 rounded-lg p-3 mb-4">
-                  <p className="text-xs text-gray-400 mb-1">Chave Pix (copiar):</p>
-                  <p className="text-sm text-white font-mono break-all">
-                    {pixKey}
-                  </p>
+                  <p className="text-xs text-gray-400 mb-2">Chave Pix:</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-white font-mono break-all flex-1">
+                      {pixKey}
+                    </p>
+                    <Button
+                      onClick={copyPixKey}
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               )}
               
