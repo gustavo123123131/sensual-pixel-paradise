@@ -12,6 +12,7 @@ interface PushinPayPayment {
   status: 'pending' | 'paid' | 'expired' | 'error';
   qr_code: string;
   qr_code_base64: string;
+  pix_key: string;
   created_at: string;
 }
 
@@ -58,6 +59,7 @@ export const createPixPayment = async (data: {
       status: 'pending',
       qr_code: payment.qr_code,
       qr_code_base64: payment.qr_code_base64,
+      pix_key: payment.qr_code, // The qr_code is the pix key
       created_at: new Date().toISOString()
     };
   } catch (error) {
