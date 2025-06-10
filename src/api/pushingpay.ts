@@ -20,6 +20,24 @@ interface PushinPayPayment {
 const API_KEY = '33167|tUJdsOZftZbNpRK1oGjp9OZAKv5Mp9TNDw0BNrcWde3b6e56';
 const PUSHINPAY_BASE_URL = 'https://api.pushinpay.com.br/api';
 
+// Função para gerar QR Code a partir do código EMV
+const generateQRCode = async (emvCode: string): Promise<string> => {
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas not supported');
+    
+    // Usar uma biblioteca de QR code ou API externa
+    // Por enquanto, vamos usar uma API pública para gerar o QR code
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(emvCode)}`;
+    
+    return qrApiUrl;
+  } catch (error) {
+    console.error('Erro ao gerar QR code:', error);
+    return '';
+  }
+};
+
 export const createPixPayment = async (data: {
   amount: number;
   description: string;
@@ -53,13 +71,17 @@ export const createPixPayment = async (data: {
     const payment = await response.json();
     console.log('Pagamento criado com sucesso:', payment);
     
+    // Extrair o código EMV do pix_details
+    const emvCode = payment.pix_details?.emv || '';
+    const qrCodeUrl = await generateQRCode(emvCode);
+    
     return {
-      id: payment.id || payment.transaction_id || Date.now().toString(),
+      id: payment.id || Date.now().toString(),
       value: data.amount,
       status: 'pending',
-      qr_code: payment.qr_code,
-      qr_code_base64: payment.qr_code_base64,
-      pix_key: payment.qr_code, // The qr_code is the pix key
+      qr_code: emvCode, // O código EMV é a chave PIX
+      qr_code_base64: qrCodeUrl, // URL da imagem do QR code
+      pix_key: emvCode,
       created_at: new Date().toISOString()
     };
   } catch (error) {
